@@ -17,7 +17,7 @@ The Flutter implementation of Funding Choices, a Google service that allows to r
   s.dependency 'Flutter'
   s.platform = :ios, '10.0'
 
-  s.dependency 'GoogleUserMessagingPlatform', '~> 2.0.0'
+  s.dependency 'GoogleUserMessagingPlatform', '>= 2.6.0'
   s.static_framework = true
 
   # Flutter.framework does not contain a i386 slice. Only x86_64 and arm64 simulators are supported.
