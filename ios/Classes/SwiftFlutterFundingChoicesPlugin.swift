@@ -16,11 +16,11 @@ public class SwiftFlutterFundingChoicesPlugin: NSObject, FlutterPlugin {
         switch call.method {
         case "requestConsentInformation":
             let arguments: [String: Any?] = call.arguments as! [String: Any?]
-            var debugGeography: UMPDebugGeography = toUMPDebugGeography(id: arguments["debugGeography"] as? Int)
+            var debugGeography: DebugGeography = toDebugGeography(id: arguments["debugGeography"] as? Int)
             requestConsentInformation(tagForUnderAgeOfConsent: arguments["tagForUnderAgeOfConsent"] as! Bool, testDevicesHashedIds: (arguments["testDevicesHashedIds"] as? [String]) ?? [], debugGeography: debugGeography, result: result)
         case "showConsentForm": showConsentForm(result: result)
         case "reset":
-            UMPConsentInformation.sharedInstance.reset()
+            ConsentInformation.shared.reset()
             result(true)
         default:
             result(FlutterMethodNotImplemented)
@@ -28,22 +28,22 @@ public class SwiftFlutterFundingChoicesPlugin: NSObject, FlutterPlugin {
     }
 
     /// Requests the consent information.
-    private func requestConsentInformation(tagForUnderAgeOfConsent: Bool, testDevicesHashedIds: [String], debugGeography: UMPDebugGeography, result: @escaping FlutterResult) {
-        let params = UMPRequestParameters()
-        params.tagForUnderAgeOfConsent = tagForUnderAgeOfConsent
+    private func requestConsentInformation(tagForUnderAgeOfConsent: Bool, testDevicesHashedIds: [String], debugGeography: DebugGeography, result: @escaping FlutterResult) {
+        let params = RequestParameters()
+        params.isTaggedForUnderAgeOfConsent = tagForUnderAgeOfConsent
 
         if (testDevicesHashedIds.count > 0) {
-            let debugSettings = UMPDebugSettings()
+            let debugSettings = DebugSettings()
             debugSettings.testDeviceIdentifiers = testDevicesHashedIds
             debugSettings.geography = debugGeography
             params.debugSettings = debugSettings
         }
         
-        UMPConsentInformation.sharedInstance.requestConsentInfoUpdate(with: params) { error in
+        ConsentInformation.shared.requestConsentInfoUpdate(with: params) { error in
             if error == nil {
                 var consentInfo: [String: Any] = [:]
-                consentInfo["consentStatus"] = UMPConsentInformation.sharedInstance.consentStatus.rawValue
-                consentInfo["isConsentFormAvailable"] = UMPConsentInformation.sharedInstance.formStatus == UMPFormStatus.available
+                consentInfo["consentStatus"] = ConsentInformation.shared.consentStatus.rawValue
+                consentInfo["isConsentFormAvailable"] = ConsentInformation.shared.formStatus == FormStatus.available
                 result(consentInfo)
             } else {
                 result(FlutterError(code: "request_error", message: error!.localizedDescription, details: nil))
@@ -53,36 +53,38 @@ public class SwiftFlutterFundingChoicesPlugin: NSObject, FlutterPlugin {
 
     /// Shows the consent form.
     private func showConsentForm(result: @escaping FlutterResult) {
-        let viewController = UIApplication.shared.keyWindow?.rootViewController
-        if viewController == nil {
-            result(FlutterError(code: "view_controller_error", message: "View controller is null.", details: nil))
+        guard let viewController = UIApplication.shared.keyWindow?.rootViewController else {
+            result(FlutterError(code: "no_controller", message: "Cannot find key window root view controller.", details: nil))
             return
         }
 
-        UMPConsentForm.load { form, error in
-            if error == nil {
-                form!.present(from: viewController!) { dismissError in
-                    if dismissError == nil {
-                        result(true)
-                    } else {
-                        result(FlutterError(code: "form_dismiss_error", message: dismissError!.localizedDescription, details: nil))
-                    }
+        ConsentForm.load { consentForm, error in
+            guard let consentForm = consentForm else {
+                result(FlutterError(code: "show_error", message: error!.localizedDescription, details: nil))
+                return
+            }
+
+            consentForm.present(from: viewController) { error in
+                if error != nil {
+                    result(FlutterError(code: "show_error", message: error!.localizedDescription, details: nil))
+                } else {
+                    result(true)
                 }
-            } else {
-                result(FlutterError(code: "form_error", message: error!.localizedDescription, details: nil))
             }
         }
     }
-    
-    /// Converts an integer to a UMPDebugGeography.
-    private func toUMPDebugGeography(id: Int?) -> UMPDebugGeography {
+
+    /// Converts an integer to an UMPDebugGeography instance.
+    private func toDebugGeography(id: Int?) -> DebugGeography {
+        guard let id = id else {
+            return DebugGeography.disabled
+        }
+
         switch id {
-        case 1:
-            return UMPDebugGeography.EEA
-        case 2:
-            return UMPDebugGeography.notEEA
-        default:
-            return UMPDebugGeography.disabled
+        case 0: return DebugGeography.disabled
+        case 1: return DebugGeography.EEA
+        case 2: return DebugGeography.notEEA
+        default: return DebugGeography.disabled
         }
     }
 }
