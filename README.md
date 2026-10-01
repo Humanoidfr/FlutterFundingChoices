@@ -1,3 +1,11 @@
+> [!WARNING]
+> **Ce dépôt a été migré sur GitLab le 01/10/2026 et n'est plus maintenu ici.**
+>
+> - Nouveau dépôt : https://gitlab.humanoid.fr/humanoid/FlutterFundingChoices
+> - Contributions et merge requests se font désormais depuis GitLab.
+> - Fork de `Skyost/FlutterFundingChoices`. ⚠️ Encore consommé **depuis ce dépôt GitHub** par le `pubspec.yaml` de `humanoid/frandroid-app-bonsplans` (dépendance git). Avant toute évolution sur GitLab, repointer le pubspec : sinon l'app continue de tirer l'ancien code, sans erreur.
+> - Ce dépôt GitHub est archivé en lecture seule. Suivi de la migration : PRO-6330.
+
 # Flutter Funding Choices
 
 _Flutter Funding Choices_ is an unofficial Flutter implementation of Funding Choices,
